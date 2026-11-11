@@ -1,5 +1,7 @@
 import { useState } from 'react';
 
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
+
 export function FileUpload() {
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
@@ -19,7 +21,7 @@ export function FileUpload() {
 
   const fetchStagingData = async () => {
     try {
-      const res = await fetch('http://localhost:8080/api/upload/staging');
+      const res = await fetch(`${API_URL}/api/upload/staging`);
       const data = await res.json();
       setStagingData(data);
     } catch (error) {
@@ -35,7 +37,7 @@ export function FileUpload() {
     formData.append('file', file);
 
     try {
-      const response = await fetch('http://localhost:8080/api/upload', {
+      const response = await fetch(`${API_URL}/api/upload`, {
         method: 'POST',
         body: formData,
       });
@@ -58,7 +60,7 @@ export function FileUpload() {
   const handleApprove = async () => {
     setApproveStatus('loading');
     try {
-      const response = await fetch('http://localhost:8080/api/upload/approve', {
+      const response = await fetch(`${API_URL}/api/upload/approve`, {
         method: 'POST',
       });
       const data = await response.json();
@@ -86,7 +88,6 @@ export function FileUpload() {
         </p>
       </div>
 
-      {/* Upload Section */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-4">
           <input 
@@ -113,7 +114,6 @@ export function FileUpload() {
         {status === 'error' && <p className="text-sm font-medium text-red-600 bg-red-50 p-3 rounded-md">{message}</p>}
       </div>
 
-      {/* Preview Table */}
       {stagingData.length > 0 && (
         <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="flex items-center justify-between mb-4">
