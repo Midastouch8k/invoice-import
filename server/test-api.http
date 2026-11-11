@@ -1,0 +1,11 @@
+POST http://localhost:8080/api/upload
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="test.csv"
+Content-Type: text/csv
+
+invoice_number,amount,date
+INV-001,100.50,2024-05-01
+INV-002,200.00,2024-05-02
+------WebKitFormBoundary7MA4YWxkTrZu0gW--

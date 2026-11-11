@@ -1,0 +1,28 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model InvoiceStaging {
+  id            Int      @id @default(autoincrement())
+  invoiceNumber String
+  amount        Float
+  date          DateTime
+  vendorEmail   String?
+  rawRow        Json?
+  status        String   @default("pending")
+  createdAt     DateTime @default(now())
+}
+
+model Invoice {
+  id            Int      @id @default(autoincrement())
+  invoiceNumber String   @unique
+  amount        Float
+  date          DateTime
+  vendorEmail   String?
+  createdAt     DateTime @default(now())
+}

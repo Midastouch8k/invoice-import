@@ -1,0 +1,41 @@
+{
+  "name": "my-pern-app-server",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --watch src/server.ts",
+    "build": "bun build src/server.ts --outdir dist --target bun",
+    "start": "bun run dist/server.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "postinstall": "PRISMA_GENERATE_SKIP_AUTOINSTALL=1 prisma generate --schema ../prisma/schema.prisma",
+    "db:generate": "PRISMA_GENERATE_SKIP_AUTOINSTALL=1 prisma generate --schema ../prisma/schema.prisma",
+    "db:migrate": "prisma migrate dev --schema ../prisma/schema.prisma",
+    "db:migrate:init": "prisma migrate dev --name init --schema ../prisma/schema.prisma",
+    "db:migrate:prod": "prisma migrate deploy --schema ../prisma/schema.prisma",
+    "db:studio": "prisma studio --schema ../prisma/schema.prisma"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.0.1",
+    "cors": "^2.8.5",
+    "csv-parser": "^3.2.1",
+    "express": "^5.0.1",
+    "multer": "^2.5.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.16.0",
+    "@types/bun": "^1.2.0",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/multer": "^2.3.0",
+    "@types/supertest": "^6.0.2",
+    "eslint": "^9.16.0",
+    "prettier": "^3.4.2",
+    "prisma": "^6.0.1",
+    "supertest": "^7.0.0",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.18.0",
+    "vitest": "^2.1.8"
+  }
+}
