@@ -141,7 +141,8 @@ export function FileUpload() {
                   <tr key={row.id} className="hover:bg-muted/50 transition-colors">
                     <td className="px-4 py-3 font-medium">{row.invoiceNumber}</td>
                     <td className="px-4 py-3">${row.amount.toFixed(2)}</td>
-                    <td className="px-4 py-3">{new Date(row.date).toLocaleDateString()}</td>
+                    {/* THE DATE FIX IS ON THE LINE BELOW */}
+                    <td className="px-4 py-3">{new Date(row.date).toLocaleDateString('en-US', { timeZone: 'UTC' })}</td>
                   </tr>
                 ))}
               </tbody>
