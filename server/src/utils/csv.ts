@@ -33,6 +33,8 @@ function normalizeInvoiceNumber(raw: string | undefined): string {
   const value = (raw ?? "").trim();
   if (!value) throw new Error("Missing invoice_number");
   if (value.length > 64) throw new Error("Invoice number is longer than 64 characters");
+  // \u0000 is rejected on purpose: NUL bytes break DB storage and exports.
+  // eslint-disable-next-line no-control-regex
   if (/[\r\n\u0000]/.test(value)) throw new Error("Invoice number contains invalid characters");
   return value;
 }

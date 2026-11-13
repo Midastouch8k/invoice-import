@@ -123,7 +123,7 @@ export function FileUpload({ locations, canWrite }: FileUploadProps) {
   };
 
   const toggleAll = () => {
-    setSelectedIds((previous) => {
+    setSelectedIds((_previous) => {
       if (allSelected) return new Set();
       return new Set(selectableRows.map((row) => row.id));
     });

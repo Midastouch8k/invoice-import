@@ -30,7 +30,7 @@ describe("App", () => {
 
   it("shows the login page when signed out", async () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    localStorage_safe: void clearAuthToken();
+    void clearAuthToken();
     render(
       <QueryClientProvider client={client}>
         <MemoryRouter>

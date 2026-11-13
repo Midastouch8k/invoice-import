@@ -1,3 +1,5 @@
+// Smoke script touches arbitrary API payloads; `any` keeps it terse on purpose.
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const BASE = "http://localhost:8080";
 
 type Json = Record<string, any>;
@@ -146,7 +148,7 @@ async function main() {
     headers: { Authorization: `Bearer ${clerkToken}` },
     body: form3,
   });
-  const clerkUploadJson = await clerkUpload.json();
+  await clerkUpload.json();
   check(
     "clerk cannot upload to another location",
     `status=${clerkUpload.status}`,
