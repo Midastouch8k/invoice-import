@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Link, Navigate, Route, Routes } from "react-router-dom";
-import { LogOut } from "lucide-react";
+import { Link, NavLink, Navigate, Route, Routes } from "react-router-dom";
+import { Activity, LogOut } from "lucide-react";
+import { cn } from "./lib/utils";
 import HomePage from "./pages/HomePage";
 import InvoicesPage from "./pages/InvoicesPage";
 import HealthPage from "./pages/HealthPage";
@@ -13,6 +14,12 @@ import { roleLabels } from "./lib/format";
 import { routes } from "./constants";
 import { queryKeys } from "./utils/queryKeys";
 import { Button } from "@/components/ui/button";
+
+const navItemClass = ({ isActive }: { isActive: boolean }) =>
+  cn(
+    "rounded-md px-3 py-1.5 text-sm transition-colors hover:text-foreground hover:underline hover:underline-offset-4",
+    isActive ? "font-medium text-foreground" : "text-muted-foreground",
+  );
 
 export default function App() {
   const [token, setToken] = useState<string | null>(() => getAuthToken());
@@ -44,6 +51,13 @@ export default function App() {
 
   const user = session.data;
 
+  const initials = user.name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]!.toUpperCase())
+    .join("");
+
   const signOut = () => {
     clearAuthToken();
     queryClient.clear();
@@ -52,30 +66,26 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <nav className="border-b bg-card/80 backdrop-blur">
+      <nav className="sticky top-0 z-40 border-b bg-card/80 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
-          <div className="flex items-center gap-6">
-            <Link className="text-sm font-semibold" to={routes.home}>
-              Invoice Import
+          <div className="flex items-center gap-2 lg:gap-8">
+            <Link to={routes.home} className="flex items-center gap-2.5">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                <Activity className="h-4 w-4 text-primary" />
+              </span>
+              <span className="text-sm font-semibold tracking-tight">Invoice Import</span>
             </Link>
-            <Link
-              to={routes.home}
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Import
-            </Link>
-            <Link
-              to={routes.invoices}
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Invoices
-            </Link>
-            <Link
-              to={routes.health}
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Health
-            </Link>
+            <div className="flex items-center gap-1">
+              <NavLink to={routes.home} end className={navItemClass}>
+                Import
+              </NavLink>
+              <NavLink to={routes.invoices} className={navItemClass}>
+                Invoices
+              </NavLink>
+              <NavLink to={routes.health} className={navItemClass}>
+                Health
+              </NavLink>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <div className="hidden text-right sm:block">
@@ -84,6 +94,9 @@ export default function App() {
                 {roleLabels[user.role] ?? user.role} · {user.organization.name}
               </p>
             </div>
+            <span className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary sm:flex">
+              {initials}
+            </span>
             <Button variant="ghost" size="sm" onClick={signOut}>
               <LogOut className="h-4 w-4" />
               Sign out

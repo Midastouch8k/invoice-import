@@ -158,19 +158,33 @@ export function FileUpload({ locations, canWrite }: FileUploadProps) {
             </label>
             <label className="space-y-1.5">
               <span className="text-sm font-medium text-foreground">CSV file</span>
-              <input
-                type="file"
-                accept=".csv"
-                disabled={!canWrite}
-                onChange={(event) => {
-                  const selected = event.target.files?.[0];
-                  if (selected) {
-                    setFile(selected);
-                    setLastUpload(null);
+              <span className="group flex h-10 w-full cursor-pointer items-center gap-3 rounded-md border border-input bg-background px-3 text-sm hover:bg-accent/40 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50">
+                <input
+                  type="file"
+                  accept=".csv"
+                  disabled={!canWrite}
+                  onChange={(event) => {
+                    const selected = event.target.files?.[0];
+                    if (selected) {
+                      setFile(selected);
+                      setLastUpload(null);
+                      // Allow re-selecting the same file after a fix.
+                      event.target.value = "";
+                    }
+                  }}
+                  className="sr-only"
+                />
+                <span className="inline-flex h-7 shrink-0 items-center rounded-md bg-primary px-3 text-xs font-semibold text-primary-foreground group-hover:bg-primary/90">
+                  Choose file
+                </span>
+                <span
+                  className={
+                    file ? "truncate font-medium text-foreground" : "truncate text-muted-foreground"
                   }
-                }}
-                className="block h-10 w-full cursor-pointer rounded-md border border-input bg-background px-3 py-1.5 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-primary-foreground hover:file:bg-primary/90"
-              />
+                >
+                  {file ? file.name : "No file chosen"}
+                </span>
+              </span>
             </label>
           </div>
 
@@ -263,72 +277,92 @@ export function FileUpload({ locations, canWrite }: FileUploadProps) {
           )}
 
           {rows.length > 0 && (
-            <div className="rounded-md border">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-muted/50 text-left text-muted-foreground">
-                    <tr>
+            <div className="overflow-x-auto rounded-md border border-slate-300">
+              <table className="w-full border-collapse border border-slate-300 text-sm">
+                <thead className="bg-slate-100 text-left">
+                  <tr>
+                    {selectableRows.length > 0 && (
+                      <th className="w-10 border border-slate-300 px-3 py-2.5 text-center">
+                        <input
+                          type="checkbox"
+                          checked={allSelected}
+                          onChange={toggleAll}
+                          aria-label="Select all rows"
+                          className="h-4 w-4 cursor-pointer"
+                        />
+                      </th>
+                    )}
+                    <th className="border border-slate-300 px-3 py-2.5 font-semibold text-slate-900">
+                      Invoice #
+                    </th>
+                    <th className="border border-slate-300 px-3 py-2.5 font-semibold text-slate-900">
+                      Vendor
+                    </th>
+                    <th className="border border-slate-300 px-3 py-2.5 font-semibold text-slate-900">
+                      Location
+                    </th>
+                    <th className="border border-slate-300 px-3 py-2.5 font-semibold text-slate-900">
+                      Amount
+                    </th>
+                    <th className="border border-slate-300 px-3 py-2.5 font-semibold text-slate-900">
+                      Date
+                    </th>
+                    <th className="border border-slate-300 px-3 py-2.5 font-semibold text-slate-900">
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row) => (
+                    <tr key={row.id} className="transition-colors hover:[&_td]:brightness-[0.97]">
                       {selectableRows.length > 0 && (
-                        <th className="w-10 px-3 py-2.5">
+                        <td className="w-10 border border-slate-300 bg-slate-100/60 px-3 py-2.5 text-center">
                           <input
                             type="checkbox"
-                            checked={allSelected}
-                            onChange={toggleAll}
-                            aria-label="Select all rows"
+                            checked={selectedIds.has(row.id)}
+                            onChange={() => toggleRow(row.id)}
+                            aria-label={`Select ${row.invoiceNumber}`}
                             className="h-4 w-4 cursor-pointer"
                           />
-                        </th>
-                      )}
-                      <th className="px-3 py-2.5 font-medium">Invoice #</th>
-                      <th className="px-3 py-2.5 font-medium">Vendor</th>
-                      <th className="px-3 py-2.5 font-medium">Location</th>
-                      <th className="px-3 py-2.5 font-medium">Amount</th>
-                      <th className="px-3 py-2.5 font-medium">Date</th>
-                      <th className="px-3 py-2.5 font-medium">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {rows.map((row) => (
-                      <tr key={row.id} className="transition-colors hover:bg-muted/40">
-                        {selectableRows.length > 0 && (
-                          <td className="px-3 py-2.5">
-                            <input
-                              type="checkbox"
-                              checked={selectedIds.has(row.id)}
-                              onChange={() => toggleRow(row.id)}
-                              aria-label={`Select ${row.invoiceNumber}`}
-                              className="h-4 w-4 cursor-pointer"
-                            />
-                          </td>
-                        )}
-                        <td className="px-3 py-2.5 font-medium">{row.invoiceNumber}</td>
-                        <td className="px-3 py-2.5">{row.vendorName ?? "—"}</td>
-                        <td className="px-3 py-2.5 text-muted-foreground">{row.location.code}</td>
-                        <td className="px-3 py-2.5 tabular-nums">{formatMoney(row.amount)}</td>
-                        <td className="px-3 py-2.5">{formatDate(row.date)}</td>
-                        <td className="px-3 py-2.5">
-                          <span
-                            className={
-                              row.status === "PENDING"
-                                ? "rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700"
-                                : row.status === "APPROVED"
-                                  ? "rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700"
-                                  : "rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700"
-                            }
-                          >
-                            {row.status.charAt(0) + row.status.slice(1).toLowerCase()}
-                          </span>
-                          {row.rejectReason && (
-                            <span className="ml-1.5 text-xs text-muted-foreground">
-                              {row.rejectReason}
-                            </span>
-                          )}
                         </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                      )}
+                      <td className="border border-slate-300 bg-white px-3 py-2.5 font-semibold text-black">
+                        {row.invoiceNumber}
+                      </td>
+                      <td className="border border-slate-300 bg-slate-50 px-3 py-2.5 text-black">
+                        {row.vendorName ?? "—"}
+                      </td>
+                      <td className="border border-slate-300 bg-white px-3 py-2.5 font-medium text-black">
+                        {row.location.code}
+                      </td>
+                      <td className="border border-slate-300 bg-slate-50 px-3 py-2.5 font-semibold text-black tabular-nums">
+                        {formatMoney(row.amount)}
+                      </td>
+                      <td className="border border-slate-300 bg-white px-3 py-2.5 text-black">
+                        {formatDate(row.date)}
+                      </td>
+                      <td className="border border-slate-300 bg-slate-50 px-3 py-2.5 text-black">
+                        <span
+                          className={
+                            row.status === "PENDING"
+                              ? "inline-block rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-900"
+                              : row.status === "APPROVED"
+                                ? "inline-block rounded-full border border-green-300 bg-green-50 px-2.5 py-0.5 text-xs font-semibold text-green-900"
+                                : "inline-block rounded-full border border-red-300 bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-900"
+                          }
+                        >
+                          {row.status.charAt(0) + row.status.slice(1).toLowerCase()}
+                        </span>
+                        {row.rejectReason && (
+                          <span className="ml-1.5 text-xs font-medium text-slate-800">
+                            {row.rejectReason}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
 

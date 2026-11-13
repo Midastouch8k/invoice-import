@@ -26,7 +26,7 @@ describe("App login transition", () => {
 
     // The MSW handler returns a valid token + session user, driving the real
     // login flow: setAuthToken -> query cache -> App re-renders with token.
-    await userEvent.type(screen.getByLabelText("Email"), "admin@demo.com");
+    await userEvent.type(screen.getByLabelText("Email"), "michael.tucker@meridianfg.com");
     await userEvent.type(screen.getByLabelText("Password"), "Password123!");
     await userEvent.click(screen.getByRole("button", { name: /sign in/i }));
 

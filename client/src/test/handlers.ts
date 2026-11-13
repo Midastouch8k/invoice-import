@@ -2,13 +2,13 @@ import { rest } from "msw";
 
 export const sessionUser = {
   id: "user-1",
-  email: "admin@demo.com",
-  name: "Avery Admin",
+  email: "michael.tucker@meridianfg.com",
+  name: "Michael Tucker",
   role: "HQ_ADMIN",
-  organization: { id: "org-1", name: "Demo Franchise Co." },
+  organization: { id: "org-1", name: "Meridian Franchise Group" },
   locations: [
-    { id: "loc-1", code: "ST-001", name: "Downtown Store" },
-    { id: "loc-2", code: "ST-002", name: "Riverside Store" },
+    { id: "loc-1", code: "DT-101", name: "Downtown Flagship" },
+    { id: "loc-2", code: "RV-102", name: "Riverside Plaza" },
   ],
 };
 
