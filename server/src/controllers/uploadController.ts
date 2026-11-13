@@ -133,13 +133,12 @@ export async function uploadInvoices(req: Request, res: Response): Promise<void>
     importedRows += created.count;
   }
 
+  // Persist the final counts (importedRows is only known after the inserts).
   const duplicateRows = withinFileDuplicates + (uniqueRows.length - importedRows);
-  if (duplicateRows !== withinFileDuplicates) {
-    await prisma.importBatch.update({
-      where: { id: batch.id },
-      data: { duplicateRows },
-    });
-  }
+  await prisma.importBatch.update({
+    where: { id: batch.id },
+    data: { importedRows, duplicateRows },
+  });
 
   await recordAudit(
     { id: user.id, email: user.email },

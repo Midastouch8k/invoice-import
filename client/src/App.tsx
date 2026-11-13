@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, Navigate, Route, Routes } from "react-router-dom";
 import { LogOut } from "lucide-react";
@@ -19,7 +19,11 @@ export default function App() {
   const queryClient = useQueryClient();
   const session = useSession();
 
-  if (!token) {
+  // Signed out — or the stored token turned out to be expired/invalid.
+  // Derived during render (not reset in an effect) so hooks always run in
+  // the same order and no cascading setState happens. A 401 anywhere also
+  // purges the dead token via the axios interceptor in lib/axios.ts.
+  if (!token || session.isError) {
     return (
       <LoginPage
         onSuccess={(user: SessionUser) => {
@@ -28,21 +32,6 @@ export default function App() {
         }}
       />
     );
-  }
-
-  const sessionError = session.isError;
-
-  useEffect(() => {
-    if (sessionError) {
-      // Expired or invalid token: reset to the login screen.
-      clearAuthToken();
-      queryClient.clear();
-      setToken(null);
-    }
-  }, [sessionError, queryClient]);
-
-  if (sessionError) {
-    return null;
   }
 
   if (session.isLoading || !session.data) {
