@@ -2,7 +2,7 @@ services:
   # Backend API Server
   - type: web
     name: invoice-import-server
-    runtime: node
+    runtime: bun
     plan: free
     region: oregon
     rootDir: server
@@ -20,11 +20,9 @@ services:
       - key: CLIENT_URL
         sync: false
 
-  # Frontend Web Client
-  - type: web
+  # Frontend Web Client (Static Site)
+  - type: static
     name: invoice-import-client
-    runtime: static
-    plan: free
     rootDir: client
     buildCommand: bun install && bun run build
     staticPublishPath: dist
