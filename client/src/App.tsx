@@ -1,48 +1,115 @@
-import { Link, Routes, Route } from 'react-router-dom';
-import HomePage from './pages/HomePage';
-import HealthPage from './pages/HealthPage';
-import { FileUpload } from './components/FileUpload'; // Import added here
+import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Link, Navigate, Route, Routes } from "react-router-dom";
+import { LogOut } from "lucide-react";
+import HomePage from "./pages/HomePage";
+import InvoicesPage from "./pages/InvoicesPage";
+import HealthPage from "./pages/HealthPage";
+import LoginPage from "./pages/LoginPage";
+import { useSession } from "./hooks/useSession";
+import { clearAuthToken, getAuthToken } from "./lib/auth";
+import type { SessionUser } from "./lib/api-types";
+import { roleLabels } from "./lib/format";
+import { routes } from "./constants";
+import { queryKeys } from "./utils/queryKeys";
+import { Button } from "@/components/ui/button";
 
 export default function App() {
+  const [token, setToken] = useState<string | null>(() => getAuthToken());
+  const queryClient = useQueryClient();
+  const session = useSession();
+
+  if (!token) {
+    return (
+      <LoginPage
+        onSuccess={(user: SessionUser) => {
+          queryClient.setQueryData(queryKeys.session, user);
+          setToken(getAuthToken());
+        }}
+      />
+    );
+  }
+
+  const sessionError = session.isError;
+
+  useEffect(() => {
+    if (sessionError) {
+      // Expired or invalid token: reset to the login screen.
+      clearAuthToken();
+      queryClient.clear();
+      setToken(null);
+    }
+  }, [sessionError, queryClient]);
+
+  if (sessionError) {
+    return null;
+  }
+
+  if (session.isLoading || !session.data) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <p className="text-sm text-muted-foreground">Loading workspace...</p>
+      </div>
+    );
+  }
+
+  const user = session.data;
+
+  const signOut = () => {
+    clearAuthToken();
+    queryClient.clear();
+    setToken(null);
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Navigation Bar */}
       <nav className="border-b bg-card/80 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
           <div className="flex items-center gap-6">
-            <Link className="text-sm font-semibold" to="/">
-              my-pern-app
+            <Link className="text-sm font-semibold" to={routes.home}>
+              Invoice Import
+            </Link>
+            <Link
+              to={routes.home}
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Import
+            </Link>
+            <Link
+              to={routes.invoices}
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Invoices
+            </Link>
+            <Link
+              to={routes.health}
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Health
             </Link>
           </div>
-          <div className="flex items-center gap-2">
-            <Link to="/">
-              <button className="p-2 hover:bg-accent rounded-md flex items-center gap-2">
-                Home
-              </button>
-            </Link>
-            <Link to="/health">
-              <button className="p-2 hover:bg-accent rounded-md flex items-center gap-2">
-                Health
-              </button>
-            </Link>
+          <div className="flex items-center gap-3">
+            <div className="hidden text-right sm:block">
+              <p className="text-sm font-medium leading-tight">{user.name}</p>
+              <p className="text-xs text-muted-foreground">
+                {roleLabels[user.role] ?? user.role} · {user.organization.name}
+              </p>
+            </div>
+            <Button variant="ghost" size="sm" onClick={signOut}>
+              <LogOut className="h-4 w-4" />
+              Sign out
+            </Button>
           </div>
         </div>
       </nav>
 
-      {/* Main Content Area */}
-      <main className="mx-auto max-w-5xl p-6">
-        
-        {/* The File Upload Component */}
-        <div className="mb-8">
-          <FileUpload />
-        </div>
-
-        {/* Your page routes */}
+      <main className="mx-auto max-w-6xl p-6">
         <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/health" element={<HealthPage />} />
+          <Route path={routes.home} element={<HomePage />} />
+          <Route path={routes.invoices} element={<InvoicesPage />} />
+          <Route path={routes.health} element={<HealthPage />} />
+          <Route path="*" element={<Navigate to={routes.home} replace />} />
         </Routes>
-        
       </main>
     </div>
   );

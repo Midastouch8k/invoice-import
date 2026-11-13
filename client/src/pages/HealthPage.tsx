@@ -41,6 +41,11 @@ export default function HealthPage() {
               Last response timestamp: <span className="font-medium text-foreground">{data.timestamp}</span>
             </p>
           )}
+          {connected && (
+            <p className="text-sm text-muted-foreground">
+              Database: <span className="font-medium text-foreground">{data.db === "up" ? "connected ✅" : "unavailable ❌"}</span>
+            </p>
+          )}
           {isError && (
             <p className="text-sm text-muted-foreground">
               Start the server with <span className="font-medium text-foreground">bun run dev</span> in

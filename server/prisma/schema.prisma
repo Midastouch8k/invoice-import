@@ -7,22 +7,204 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum UserRole {
+  HQ_ADMIN
+  REGIONAL_MANAGER
+  FRANCHISEE
+  AP_CLERK
+  AUDITOR
+}
+
+enum StagingStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum InvoiceStatus {
+  APPROVED
+  VOID
+}
+
+enum BatchStatus {
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+// ---------------------------------------------------------------------------
+// Tenancy: Organization -> Location -> User
+// ---------------------------------------------------------------------------
+
+model Organization {
+  id        String         @id @default(cuid())
+  name      String
+  createdAt DateTime       @default(now())
+  locations Location[]
+  users     User[]
+  vendors   Vendor[]
+  invoices  Invoice[]
+  batches   ImportBatch[]
+  staging   InvoiceStaging[]
+  auditLogs AuditLog[]
+}
+
+model Location {
+  id             String           @id @default(cuid())
+  organizationId String
+  organization   Organization     @relation(fields: [organizationId], references: [id])
+  code           String
+  name           String
+  currency       String           @default("USD")
+  invoices       Invoice[]
+  staging        InvoiceStaging[]
+  batches        ImportBatch[]
+  users          UserLocation[]
+  createdAt      DateTime         @default(now())
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+}
+
+model User {
+  id             String         @id @default(cuid())
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id])
+  email          String         @unique
+  passwordHash   String
+  name           String
+  role           UserRole       @default(AP_CLERK)
+  locations      UserLocation[]
+  approvedStaged InvoiceStaging[] @relation("StagingReviewer")
+  approvedInvoice Invoice[]      @relation("InvoiceApprover")
+  auditLogs      AuditLog[]
+  batches        ImportBatch[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([organizationId])
+}
+
+model UserLocation {
+  userId     String
+  locationId String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@id([userId, locationId])
+  @@index([locationId])
+}
+
+// ---------------------------------------------------------------------------
+// Vendors & invoices
+// ---------------------------------------------------------------------------
+
+model Vendor {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  name           String
+  email          String?
+  invoices       Invoice[]
+  createdAt      DateTime @default(now())
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+}
+
 model InvoiceStaging {
-  id            Int      @id @default(autoincrement())
-  invoiceNumber String
-  amount        Float
-  date          DateTime
-  vendorEmail   String?
-  rawRow        Json?
-  status        String   @default("pending")
-  createdAt     DateTime @default(now())
+  id             String        @id @default(cuid())
+  batchId        String
+  batch          ImportBatch   @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id])
+  locationId     String
+  location       Location      @relation(fields: [locationId], references: [id])
+  invoiceNumber  String
+  vendorName     String?
+  vendorEmail    String?
+  amount         Decimal       @db.Decimal(12, 2)
+  date           DateTime      @db.Date
+  rawRow         Json?
+  status         StagingStatus @default(PENDING)
+  rejectReason   String?
+  reviewedById   String?
+  reviewedBy     User?         @relation("StagingReviewer", fields: [reviewedById], references: [id])
+  createdAt      DateTime      @default(now())
+
+  @@unique([batchId, invoiceNumber])
+  @@index([organizationId, status])
+  @@index([locationId, status])
 }
 
 model Invoice {
-  id            Int      @id @default(autoincrement())
-  invoiceNumber String   @unique
-  amount        Float
-  date          DateTime
-  vendorEmail   String?
-  createdAt     DateTime @default(now())
+  id             String        @id @default(cuid())
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id])
+  locationId     String
+  location       Location      @relation(fields: [locationId], references: [id])
+  vendorId       String
+  vendor         Vendor        @relation(fields: [vendorId], references: [id])
+  invoiceNumber  String
+  amount         Decimal       @db.Decimal(12, 2)
+  date           DateTime      @db.Date
+  vendorEmail    String?
+  status         InvoiceStatus @default(APPROVED)
+  batchId        String?
+  approvedById   String?
+  approvedBy     User?         @relation("InvoiceApprover", fields: [approvedById], references: [id])
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  // Same invoice number can exist per location+vendor (two stores, same vendor number)
+  @@unique([locationId, vendorId, invoiceNumber])
+  @@index([organizationId, date])
+  @@index([locationId, date])
+  @@index([status])
+}
+
+// ---------------------------------------------------------------------------
+// Import batches & audit trail
+// ---------------------------------------------------------------------------
+
+model ImportBatch {
+  id             String      @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  locationId     String
+  location       Location    @relation(fields: [locationId], references: [id])
+  uploadedById   String
+  uploadedBy     User        @relation(fields: [uploadedById], references: [id])
+  fileName       String
+  status         BatchStatus @default(COMPLETED)
+  totalRows      Int         @default(0)
+  importedRows   Int         @default(0)
+  duplicateRows  Int         @default(0)
+  failedRows     Int         @default(0)
+  failures       Json?
+  staging        InvoiceStaging[]
+  createdAt      DateTime    @default(now())
+
+  @@index([locationId, createdAt])
+  @@index([organizationId, createdAt])
+}
+
+model AuditLog {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  actorId        String?
+  actor          User?        @relation(fields: [actorId], references: [id])
+  actorEmail     String
+  action         String
+  entityType     String
+  entityId       String
+  metadata       Json?
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId, createdAt])
 }
